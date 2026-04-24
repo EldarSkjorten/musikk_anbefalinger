@@ -8,11 +8,37 @@
 <body>
   <h1>Musikk-anbefalinger</h1>
   <div id="spiller"></div>
+  <div id="lenker"></div>
   <button id="neste" onclick="visAnnen()">Vis en annen</button>
 
   <script>
+    const plattformer = {
+      spotify:      'Spotify',
+      tidal:        'Tidal',
+      youtubeMusic: 'YouTube Music',
+      appleMusic:   'Apple Music',
+      deezer:       'Deezer',
+      amazonMusic:  'Amazon Music',
+    };
+
     let songs = [];
     let forrige = -1;
+
+    function hentAppleMusicUrl(embedKode) {
+      const match = embedKode.match(/src="([^"]+)"/);
+      if (!match) return null;
+      return match[1].replace('embed.music.apple.com', 'music.apple.com');
+    }
+
+    function visLenker(data) {
+      const lenkerDiv = document.getElementById('lenker');
+      const linker = data.linksByPlatform;
+      const html = Object.entries(plattformer)
+        .filter(([key]) => linker[key])
+        .map(([key, navn]) => `<a href="${linker[key].url}" target="_blank">${navn}</a>`)
+        .join(' · ');
+      lenkerDiv.innerHTML = html || '';
+    }
 
     function visAnnen() {
       if (songs.length === 0) return;
@@ -24,6 +50,20 @@
 
       forrige = indeks;
       document.getElementById('spiller').innerHTML = songs[indeks];
+      document.getElementById('lenker').innerHTML = 'Henter lenker…';
+
+      const appleUrl = hentAppleMusicUrl(songs[indeks]);
+      if (!appleUrl) {
+        document.getElementById('lenker').innerHTML = '';
+        return;
+      }
+
+      fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(appleUrl)}`)
+        .then(r => r.json())
+        .then(visLenker)
+        .catch(() => {
+          document.getElementById('lenker').innerHTML = '';
+        });
     }
 
     fetch('songs.txt')
