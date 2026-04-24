@@ -12,15 +12,6 @@
   <button id="neste" onclick="visAnnen()">Vis en annen</button>
 
   <script>
-    const plattformer = {
-      spotify:      'Spotify',
-      tidal:        'Tidal',
-      youtubeMusic: 'YouTube Music',
-      appleMusic:   'Apple Music',
-      deezer:       'Deezer',
-      amazonMusic:  'Amazon Music',
-    };
-
     let songs = [];
     let forrige = -1;
 
@@ -28,16 +19,6 @@
       const match = embedKode.match(/src="([^"]+)"/);
       if (!match) return null;
       return match[1].replace('embed.music.apple.com', 'music.apple.com');
-    }
-
-    function visLenker(data) {
-      const lenkerDiv = document.getElementById('lenker');
-      const linker = data.linksByPlatform;
-      const html = Object.entries(plattformer)
-        .filter(([key]) => linker[key])
-        .map(([key, navn]) => `<a href="${linker[key].url}" target="_blank">${navn}</a>`)
-        .join(' · ');
-      lenkerDiv.innerHTML = html || '';
     }
 
     function visAnnen() {
@@ -50,23 +31,13 @@
 
       forrige = indeks;
       document.getElementById('spiller').innerHTML = songs[indeks];
-      document.getElementById('lenker').innerHTML = 'Henter lenker…';
 
       const appleUrl = hentAppleMusicUrl(songs[indeks]);
-      if (!appleUrl) {
-        document.getElementById('lenker').innerHTML = '';
-        return;
+      if (appleUrl) {
+        const songLinkUrl = 'https://song.link/' + encodeURIComponent(appleUrl);
+        document.getElementById('lenker').innerHTML =
+          `<a href="${songLinkUrl}" target="_blank">Finn på alle strømmetjenester →</a>`;
       }
-
-      fetch(`https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(appleUrl)}`)
-        .then(r => r.json())
-        .then(data => {
-          console.log('Odesli svar:', JSON.stringify(data));
-          visLenker(data);
-        })
-        .catch(err => {
-          document.getElementById('lenker').innerHTML = 'Feil: ' + err.message;
-        });
     }
 
     fetch('songs.txt')
