@@ -7,6 +7,16 @@
 </head>
 <body>
   <h1>Musikk-anbefalinger</h1>
-  <p>Kommer snart.</p>
+  <div id="spiller"></div>
+
+  <script>
+    fetch('songs.txt')
+      .then(response => response.text())
+      .then(text => {
+        const songs = text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+        const tilfeldig = songs[Math.floor(Math.random() * songs.length)];
+        document.getElementById('spiller').innerHTML = tilfeldig;
+      });
+  </script>
 </body>
 </html>
