@@ -9,6 +9,7 @@
   <h1>Musikk-anbefalinger</h1>
   <div id="spiller"></div>
   <div id="lenker"></div>
+  <div id="debug"></div>
   <button id="neste" onclick="visAnnen()">Vis en annen</button>
 
   <script>
@@ -51,6 +52,8 @@
         localStorage.removeItem('sett');
         sett = [];
         usett = songs.filter(s => hentTrackId(s) !== forrigeId);
+        document.getElementById('debug').textContent = '🔄 Historikk nullstilt!';
+        setTimeout(() => document.getElementById('debug').textContent = '', 3000);
       }
 
       const valgt = usett[Math.floor(Math.random() * usett.length)];
@@ -58,6 +61,13 @@
 
       forrigeId = trackId;
       markerSett(trackId);
+
+      const gjenværende = songs.filter(s => {
+        const id = hentTrackId(s);
+        return id && !hentSett().includes(id);
+      }).length;
+      document.getElementById('debug').textContent =
+        `(${gjenværende} av ${songs.length} låter ikke sett ennå)`;
 
       document.getElementById('spiller').innerHTML = valgt;
 
