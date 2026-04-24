@@ -13,7 +13,12 @@
 
   <script>
     let songs = [];
-    let forrige = -1;
+    let forrigeId = null;
+
+    function hentTrackId(embedKode) {
+      const match = embedKode.match(/[?&]i=(\d+)/);
+      return match ? match[1] : null;
+    }
 
     function hentAppleMusicUrl(embedKode) {
       const match = embedKode.match(/src="([^"]+)"/);
@@ -21,18 +26,42 @@
       return match[1].replace('embed.music.apple.com', 'music.apple.com');
     }
 
+    function hentSett() {
+      return JSON.parse(localStorage.getItem('sett') || '[]');
+    }
+
+    function markerSett(trackId) {
+      const sett = hentSett();
+      if (!sett.includes(trackId)) {
+        sett.push(trackId);
+        localStorage.setItem('sett', JSON.stringify(sett));
+      }
+    }
+
     function visAnnen() {
       if (songs.length === 0) return;
 
-      let indeks;
-      do {
-        indeks = Math.floor(Math.random() * songs.length);
-      } while (indeks === forrige && songs.length > 1);
+      let sett = hentSett();
+      let usett = songs.filter(s => {
+        const id = hentTrackId(s);
+        return id && !sett.includes(id) && id !== forrigeId;
+      });
 
-      forrige = indeks;
-      document.getElementById('spiller').innerHTML = songs[indeks];
+      if (usett.length === 0) {
+        localStorage.removeItem('sett');
+        sett = [];
+        usett = songs.filter(s => hentTrackId(s) !== forrigeId);
+      }
 
-      const appleUrl = hentAppleMusicUrl(songs[indeks]);
+      const valgt = usett[Math.floor(Math.random() * usett.length)];
+      const trackId = hentTrackId(valgt);
+
+      forrigeId = trackId;
+      markerSett(trackId);
+
+      document.getElementById('spiller').innerHTML = valgt;
+
+      const appleUrl = hentAppleMusicUrl(valgt);
       if (appleUrl) {
         const songLinkUrl = 'https://song.link/' + encodeURIComponent(appleUrl);
         document.getElementById('lenker').innerHTML =
