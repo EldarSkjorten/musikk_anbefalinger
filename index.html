@@ -8,14 +8,29 @@
 <body>
   <h1>Musikk-anbefalinger</h1>
   <div id="spiller"></div>
+  <button id="neste" onclick="visAnnen()">Vis en annen</button>
 
   <script>
+    let songs = [];
+    let forrige = -1;
+
+    function visAnnen() {
+      if (songs.length === 0) return;
+
+      let indeks;
+      do {
+        indeks = Math.floor(Math.random() * songs.length);
+      } while (indeks === forrige && songs.length > 1);
+
+      forrige = indeks;
+      document.getElementById('spiller').innerHTML = songs[indeks];
+    }
+
     fetch('songs.txt')
       .then(response => response.text())
       .then(text => {
-        const songs = text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-        const tilfeldig = songs[Math.floor(Math.random() * songs.length)];
-        document.getElementById('spiller').innerHTML = tilfeldig;
+        songs = text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+        visAnnen();
       });
   </script>
 </body>
