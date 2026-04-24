@@ -7,29 +7,46 @@
 </head>
 <body>
   <h1>Musikk-anbefalinger</h1>
+
+  <!-- Her vises Apple Music-spilleren (embed-koden fra songs.txt) -->
   <div id="spiller"></div>
+
+  <!-- Her vises lenken til song.link (alle strømmetjenester) -->
   <div id="lenker"></div>
-<button id="neste" onclick="visAnnen()">Vis en annen</button>
+
+  <!-- Knappen kaller visAnnen() hver gang den trykkes -->
+  <button id="neste" onclick="visAnnen()">Vis en annen</button>
 
   <script>
+    // Alle embed-koder fra songs.txt, lastet inn ved oppstart
     let songs = [];
+
+    // Track-ID til låten som vises nå — brukes til å unngå samme låt to ganger på rad
     let forrigeId = null;
 
+
+    // Henter ut track-ID (?i=XXXXXXX) fra en embed-kode
+    // Brukes som unik nøkkel for å identifisere låter i historikken
     function hentTrackId(embedKode) {
       const match = embedKode.match(/[?&]i=(\d+)/);
       return match ? match[1] : null;
     }
 
+    // Henter ut Apple Music-URL fra embed-koden og gjør den om fra embed-format
+    // til vanlig URL — nødvendig for song.link-lenken
     function hentAppleMusicUrl(embedKode) {
       const match = embedKode.match(/src="([^"]+)"/);
       if (!match) return null;
       return match[1].replace('embed.music.apple.com', 'music.apple.com');
     }
 
+    // Henter listen over sette track-ID-er fra localStorage (nettleserens huskelapp)
+    // Returnerer tom liste hvis ingenting er lagret ennå
     function hentSett() {
       return JSON.parse(localStorage.getItem('sett') || '[]');
     }
 
+    // Legger til en track-ID i listen over sette låter og lagrer den i localStorage
     function markerSett(trackId) {
       const sett = hentSett();
       if (!sett.includes(trackId)) {
@@ -38,30 +55,36 @@
       }
     }
 
+    // Velger og viser en ny tilfeldig låt
     function visAnnen() {
       if (songs.length === 0) return;
 
+      // Filtrer bort låter som allerede er sett, og den som vises nå
       let sett = hentSett();
       let usett = songs.filter(s => {
         const id = hentTrackId(s);
         return id && !sett.includes(id) && id !== forrigeId;
       });
 
+      // Hvis alle låter er sett: nullstill historikken og start på nytt
       if (usett.length === 0) {
         localStorage.removeItem('sett');
         sett = [];
         usett = songs.filter(s => hentTrackId(s) !== forrigeId);
       }
 
+      // Velg en tilfeldig låt fra de gjenværende
       const valgt = usett[Math.floor(Math.random() * usett.length)];
       const trackId = hentTrackId(valgt);
 
+      // Husk denne låten og merk den som sett
       forrigeId = trackId;
       markerSett(trackId);
 
-
+      // Vis Apple Music-spilleren
       document.getElementById('spiller').innerHTML = valgt;
 
+      // Bygg song.link-URL og vis lenken
       const appleUrl = hentAppleMusicUrl(valgt);
       if (appleUrl) {
         const songLinkUrl = 'https://song.link/' + encodeURIComponent(appleUrl);
@@ -70,6 +93,7 @@
       }
     }
 
+    // Last inn songs.txt når siden åpnes, del opp i linjer og vis første låt
     fetch('songs.txt')
       .then(response => response.text())
       .then(text => {
